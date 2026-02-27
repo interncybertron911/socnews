@@ -87,7 +87,25 @@ router.get("/yaml", async (req, res) => {
         }
 
         // Try to find in Database first (Primary source now)
-        const filter = ruleId ? { ruleId } : { sourcePath: filePath };
+        let filter: any = {};
+        if (ruleId) {
+            filter = { ruleId };
+        } else {
+            // ✅ Handle both with and without 'rules/' prefix (AI might send either)
+            const normalizedPath = filePath.replace(/\\/g, "/");
+            const withPrefix = normalizedPath.startsWith("rules/") ? normalizedPath : `rules/${normalizedPath}`;
+            const withoutPrefix = normalizedPath.startsWith("rules/") ? normalizedPath.replace("rules/", "") : normalizedPath;
+
+            filter = {
+                $or: [
+                    { sourcePath: withPrefix },
+                    { sourcePath: withoutPrefix },
+                    { sourcePath: normalizedPath },
+                    { sourcePath: filePath }
+                ]
+            };
+        }
+
         const rule = await SigmaRuleModel.findOne(filter).lean();
 
         if (rule && rule.sourceYaml) {
