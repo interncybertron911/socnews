@@ -9,6 +9,10 @@
         "outDir": "dist",
         "strict": true,
         "esModuleInterop": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "include": [
+            "src/**/*",
+            "src/types/**/*.d.ts"
+        ]
     }
 }
