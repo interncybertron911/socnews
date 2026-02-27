@@ -17,11 +17,12 @@ import { ingestHN } from "./ti/hn_ingest_service";
 
 const app = express();
 const httpServer = createServer(app);
+
 const io = new Server(httpServer, {
     cors: {
         origin: "*",
-        methods: ["GET", "POST", "PATCH", "DELETE"]
-    }
+        methods: ["GET", "POST", "PATCH", "DELETE"],
+    },
 });
 
 app.use(cors());
@@ -36,20 +37,25 @@ app.use("/ti", tiRoutes);
 app.use("/sigma", sigmaRoutes);
 app.use("/auth", authRoutes);
 
+// Central error handler
 app.use((err: any, _req: any, res: any, _next: any) => {
     console.error(err);
     res.status(500).json({ ok: false, error: err?.message ?? "Internal error" });
 });
 
-const PORT = config.port;
-
 async function main() {
-    const MONGO_URI = config.mongoUri;
-    if (!MONGO_URI) {
-        throw new Error("Missing MONGO_URI in environment (.env)");
+    // ✅ Validate required env early (production-friendly)
+    if (!config.mongoUri) {
+        throw new Error("Missing MONGO_URI in environment variables");
+    }
+    if (!config.jwtSecret) {
+        throw new Error("Missing JWT_SECRET in environment variables");
+    }
+    if (config.llm.enabled && !config.llm.geminiApiKey) {
+        throw new Error("LLM is enabled but missing GEMINI_API_KEY in environment variables");
     }
 
-    await mongoose.connect(MONGO_URI);
+    await mongoose.connect(config.mongoUri);
     console.log("Mongo connected");
 
     // Initialize Socket logic
@@ -67,9 +73,10 @@ async function main() {
 
     console.log("[CRON][HN] scheduled every 30 minutes");
 
-    httpServer.listen(PORT, () => {
-        console.log(`API listening on http://localhost:${PORT}`);
-        console.log(`Socket.io ready on same port`);
+    // ✅ Render provides process.env.PORT
+    httpServer.listen(config.port, () => {
+        console.log(`API listening on port ${config.port}`);
+        console.log("Socket.io ready on same port");
     });
 }
 
