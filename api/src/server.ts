@@ -80,6 +80,11 @@ async function main() {
     });
 }
 
+setInterval(() => {
+    const used = process.memoryUsage().rss / 1024 / 1024;
+    console.log(`Memory usage: ${used.toFixed(2)} MB`);
+}, 60000);
+
 main().catch((e) => {
     console.error("Startup failed:", e);
     process.exit(1);
