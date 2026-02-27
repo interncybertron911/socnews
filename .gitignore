@@ -1,0 +1,22 @@
+# Node
+node_modules/
+.vite/
+dist/
+build/
+*.log
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Python venv (สำหรับ pySigma)
+api/.venv/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+server_log.txt
