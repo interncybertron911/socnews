@@ -84,6 +84,10 @@ setInterval(() => {
     const used = process.memoryUsage().rss / 1024 / 1024;
     console.log(`Memory usage: ${used.toFixed(2)} MB`);
 }, 60000);
+setInterval(() => {
+    const cpu = process.cpuUsage();
+    console.log("CPU usage:", cpu);
+}, 60000);
 
 main().catch((e) => {
     console.error("Startup failed:", e);
