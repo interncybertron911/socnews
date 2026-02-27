@@ -28,6 +28,7 @@ const SigmaRuleSchema = new Schema(
         text: { type: String, default: "" },
 
         isCustom: { type: Boolean, default: false },
+        sourceYaml: { type: String, default: "" }, // ✅ Store raw YAML content to avoid filesystem dependency
     },
     { timestamps: true }
 );

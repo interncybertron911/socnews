@@ -80,26 +80,23 @@ function toStringArray(v: any): string[] {
 router.get("/yaml", async (req, res) => {
     try {
         const filePath = req.query.path as string;
-        if (!filePath) {
-            return res.status(400).json({ ok: false, error: "path is required" });
+        const ruleId = req.query.ruleId as string;
+
+        if (!filePath && !ruleId) {
+            return res.status(400).json({ ok: false, error: "path or ruleId is required" });
         }
 
-        // ป้องกัน path traversal
-        const baseDir = path.resolve(process.cwd(), "data", "sigma", "rules");
-        const resolvedPath = path.resolve(baseDir, filePath);
+        // Try to find in Database first (Primary source now)
+        const filter = ruleId ? { ruleId } : { sourcePath: filePath };
+        const rule = await SigmaRuleModel.findOne(filter).lean();
 
-        if (!resolvedPath.startsWith(baseDir)) {
-            return res.status(403).json({ ok: false, error: "invalid path" });
+        if (rule && rule.sourceYaml) {
+            return res.json({ ok: true, yaml: rule.sourceYaml });
         }
 
-        if (!fs.existsSync(resolvedPath)) {
-            return res.status(404).json({ ok: false, error: "file not found" });
-        }
-
-        const yaml = fs.readFileSync(resolvedPath, "utf-8");
-        return res.json({ ok: true, yaml });
+        return res.status(404).json({ ok: false, error: "Sigma rule content not found in database. Please run import process." });
     } catch (e: any) {
-        return res.status(500).json({ ok: false, error: e?.message ?? "read failed" });
+        return res.status(500).json({ ok: false, error: e?.message ?? "Database read failed" });
     }
 });
 
@@ -127,7 +124,7 @@ router.post("/convert-splunk", async (req, res) => {
 });
 
 
-router.post("/import/local", async (req, res) => {
+router.get("/import/local", async (req, res) => {
     try {
         const baseDir = String(req.query.baseDir ?? "data/sigma").trim();
         const rulesGlob = `${baseDir}/rules/**/*.yml`;
@@ -187,6 +184,7 @@ router.post("/import/local", async (req, res) => {
                             yamlLink,
                             text,
                             isCustom: false,
+                            sourceYaml: raw, // ✅ บันทึก YAML ลง DB
                         },
                     },
                     { upsert: true }
@@ -400,7 +398,7 @@ router.get("/search", async (req, res) => {
  */
 router.post("/", async (req, res) => {
     try {
-        const { ruleId, title, description, level, status, tags, logsource, detection, falsepositives, references } = req.body;
+        const { ruleId, title, description, level, status, tags, logsource, detection, falsepositives, references, sourceYaml } = req.body;
 
         if (!ruleId || !title) {
             return res.status(400).json({ ok: false, error: "ruleId and title are required" });
@@ -424,7 +422,8 @@ router.post("/", async (req, res) => {
             yamlLink: "local",
             slug,
             text,
-            isCustom: true
+            isCustom: true,
+            sourceYaml: sourceYaml || ""
         });
 
         return res.json({ ok: true, item: rule });
