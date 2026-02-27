@@ -1,3 +1,2 @@
-sigma
-sigma-backend-splunk
-PyYAML
+pysigma
+pysigma-backend-splunk
