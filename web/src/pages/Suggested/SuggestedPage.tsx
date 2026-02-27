@@ -336,16 +336,18 @@ const SuggestedPage: React.FC = () => {
         setLoader(true);
         try {
             const data = await fetchSuggested(selectedArticleId, { task, ruleId: selectedSigmaId });
-            if (data.status === "READY" && data.analysis) {
-                setAnalysisData(prev => ({
-                    ...prev,
-                    newsSummary: data.analysis.newsSummary || prev?.newsSummary || "",
-                    sigmaReasoning: data.analysis.sigmaReasoning || prev?.sigmaReasoning || "",
-                    splunkReasoning: data.analysis.splunkReasoning || prev?.splunkReasoning || "",
-                    splunkQuery: data.analysis.splunkQuery || prev?.splunkQuery || "",
-                    primaryRuleId: data.analysis.primaryRuleId || prev?.primaryRuleId || null
-                }));
-            }
+
+            const analysis = data?.analysis;
+            if (data?.status !== "READY" || !analysis) return;
+
+            setAnalysisData((prev) => ({
+                ...prev,
+                newsSummary: analysis.newsSummary ?? prev?.newsSummary ?? "",
+                sigmaReasoning: analysis.sigmaReasoning ?? prev?.sigmaReasoning ?? "",
+                splunkReasoning: analysis.splunkReasoning ?? prev?.splunkReasoning ?? "",
+                splunkQuery: analysis.splunkQuery ?? prev?.splunkQuery ?? "",
+                primaryRuleId: analysis.primaryRuleId ?? prev?.primaryRuleId ?? null,
+            }));
         } catch (err: any) {
             console.error(`AI Generation failed (${task}):`, err);
             alert(`AI Generation failed: ${err.message}`);
@@ -353,9 +355,6 @@ const SuggestedPage: React.FC = () => {
             setLoader(false);
         }
     };
-
-
-
 
     const handleSelectArticle = async (externalId: string) => {
         const article = tiArticles.find(a => a.externalId === externalId);
