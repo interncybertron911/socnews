@@ -145,9 +145,15 @@ router.get("/", async (req, res) => {
         let topSplunkQuery = cached?.result?.splunkQuery || "";
         if (!topSplunkQuery && targetRule) {
             try {
-                const ruleFile = path.resolve(process.cwd(), "data", "sigma", targetRule.sourcePath);
-                const yamlText = await fsp.readFile(ruleFile, "utf8");
-                topSplunkQuery = await convertSigmaToSplunk(yamlText, signal);
+                // ✅ Fetch from DB instead of filesystem
+                const ruleId = targetRule.id;
+                const dbRule = await SigmaRuleModel.findOne({ ruleId }).lean();
+
+                if (dbRule && dbRule.sourceYaml) {
+                    topSplunkQuery = await convertSigmaToSplunk(dbRule.sourceYaml, signal);
+                } else {
+                    console.warn(`[/suggested] sourceYaml not found in DB for ruleId: ${ruleId}`);
+                }
             } catch (e) {
                 console.error("Splunk conversion failed:", e);
             }
