@@ -34,14 +34,27 @@ const SplunkQueryCard: React.FC<SplunkQueryCardProps> = ({ query, isLoading, onC
                         placeholder="Splunk query will appear here..."
                     />
                 )}
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '5px' }}>
                     <button
                         className="btn"
-                        style={{ fontSize: 10 }}
-                        onClick={onCopy}
+                        style={{ fontSize: 10, padding: '5px 25px' }}
+                        onClick={() => {
+                            if (navigator.clipboard) {
+                                navigator.clipboard.writeText(query);
+                            } else {
+                                // Fallback for non-secure contexts (HTTP)
+                                const textArea = document.createElement("textarea");
+                                textArea.value = query;
+                                document.body.appendChild(textArea);
+                                textArea.select();
+                                document.execCommand("copy");
+                                document.body.removeChild(textArea);
+                            }
+                            alert('Copied to clipboard!');
+                        }}
                         disabled={!query || isLoading}
                     >
-                        Copy
+                        Copy Query
                     </button>
                 </div>
             </div>
