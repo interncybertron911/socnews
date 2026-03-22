@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ThreatNewsList from '../Suggested/components/ThreatNewsList';
 import NewsDonutChart from './components/NewsDonutChart';
-import DangerousThreats from './components/DangerousThreats';
+import MonthlyNewsChart from './components/MonthlyNewsChart';
 import NewsCategoryFilters from './components/NewsCategoryFilters';
 import { fetchTIArticles, type TIArticle } from "../../services/tiService";
 import type { ThreatArticle } from '../../models/incidentModel';
@@ -15,12 +15,25 @@ const NewsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [filterTitle, setFilterTitle] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+    const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
     const loadNews = async () => {
         setLoading(true);
         try {
-            const items = await fetchTIArticles('NEW,READ,IN_PROGRESS,COMPLETE', 100, {
-                title: filterTitle
+            // วันที่เป้าหมายจาก Date Picker
+            const targetDate = new Date(selectedDate);
+            targetDate.setHours(0, 0, 0, 0);
+            const startDate = targetDate.toISOString();
+            
+            const endTarget = new Date(targetDate);
+            endTarget.setDate(endTarget.getDate() + 1);
+            const endDate = endTarget.toISOString();
+
+            // ดึงข้อมูลโดยกำหนดวันที่ให้เป็นแค่วันนี้ (ให้ Limit เยอะขึ้นเพื่อดึงข่าวทั้งหมดของวันนี้ให้ครบ)
+            const items = await fetchTIArticles('NEW,READ,IN_PROGRESS,COMPLETE', 500, {
+                title: filterTitle,
+                startDate,
+                endDate
             });
             setTiArticles(items);
         } catch (err) {
@@ -33,7 +46,7 @@ const NewsPage: React.FC = () => {
     useEffect(() => {
         const timer = setTimeout(loadNews, filterTitle ? 500 : 0);
         return () => clearTimeout(timer);
-    }, [filterTitle]);
+    }, [filterTitle, selectedDate]);
 
     // Same logic helper for consistency
     const getArticleCategory = (title: string) => {
@@ -95,21 +108,7 @@ const NewsPage: React.FC = () => {
         }).filter(d => d.count > 0);
     }, [categoryStats]);
 
-    // Top 5 "Dangerous" (Simplified version: Latest 5 with most "impactful" keywords or just latest)
-    const dangerousItems = useMemo(() => {
-        return [...tiArticles]
-            .sort((a, b) => {
-                // Heuristic: Vulnerabilities and exploits are "more dangerous"
-                const getScore = (title: string) => {
-                    const t = title.toLowerCase();
-                    if (t.includes('cve') || t.includes('exploit') || t.includes('zero day')) return 10;
-                    if (t.includes('malware') || t.includes('breach')) return 5;
-                    return 1;
-                };
-                return getScore(b.title) - getScore(a.title);
-            })
-            .slice(0, 5);
-    }, [tiArticles]);
+
 
     // Format for component
     const uiArticles: ThreatArticle[] = useMemo(() => {
@@ -144,9 +143,7 @@ const NewsPage: React.FC = () => {
                         categoryStats={categoryStats}
                     />
 
-                    <DangerousThreats
-                        items={dangerousItems}
-                    />
+                    <MonthlyNewsChart />
                 </div>
 
                 {/* ROW 2: Intel & Context List */}
@@ -166,6 +163,7 @@ const NewsPage: React.FC = () => {
                                     value={filterTitle}
                                     onChange={(e) => setFilterTitle(e.target.value)}
                                     style={{
+                                        width: '100%',
                                         height: '32px',
                                         fontSize: '10px',
                                         paddingLeft: '35px',
@@ -177,13 +175,37 @@ const NewsPage: React.FC = () => {
                                 <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.3, fontSize: '10px' }}>🔍</span>
                             </div>
 
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', color: '#444' }}>
-                                <span>LIMIT: 100</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '10px', color: '#444' }}>
+                                <input
+                                    type="date"
+                                    value={selectedDate}
+                                    onChange={(e) => setSelectedDate(e.target.value)}
+                                    className="input-dark"
+                                    style={{
+                                        height: '30px',
+                                        fontSize: '10px',
+                                        padding: '0 8px',
+                                        border: '1px solid #222',
+                                        borderRadius: '4px',
+                                        letterSpacing: '1px',
+                                        color: '#aaa',
+                                        background: 'rgba(255, 255, 255, 0.03)',
+                                        cursor: 'pointer'
+                                    }}
+                                />
+                                <div style={{ width: '1px', height: '12px', background: '#222' }}></div>
+                                <span style={{ textTransform: 'uppercase' }}>
+                                    {selectedDate === new Date().toISOString().split('T')[0] ? "TODAY'S FEEDS" : "PAST FEEDS"}
+                                </span>
                                 <div style={{ width: '1px', height: '12px', background: '#222' }}></div>
                                 <button
                                     className="btn"
                                     style={{ padding: '2px 8px', fontSize: '9px', borderColor: '#222' }}
-                                    onClick={() => { setFilterTitle(''); setSelectedCategory('ALL'); loadNews(); }}
+                                    onClick={() => { 
+                                        setFilterTitle(''); 
+                                        setSelectedCategory('ALL'); 
+                                        setSelectedDate(new Date().toISOString().split('T')[0]);
+                                    }}
                                 >
                                     RESET
                                 </button>

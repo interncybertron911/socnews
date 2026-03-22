@@ -12,6 +12,7 @@ build/
 
 # Python venv (สำหรับ pySigma)
 api/.venv/
+api/data/
 
 # OS files
 .DS_Store

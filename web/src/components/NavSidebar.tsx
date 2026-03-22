@@ -16,7 +16,7 @@ const NavSidebar: React.FC = () => {
             title: 'MAIN',
             items: [
                 { name: 'News', icon: '📰', path: '/news' },
-                { name: 'Sigma Rules', icon: '📜', path: '/rules' },
+                { name: 'Rules', icon: '📜', path: '/rules' },
                 { name: 'Lookup', icon: '💡', path: '/lookup' },
                 { name: 'History', icon: '🕒', path: '/history' },
                 { name: 'Settings', icon: '⚙️', path: '/settings' },

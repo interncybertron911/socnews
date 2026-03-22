@@ -41,7 +41,7 @@ const SigmaTable: React.FC<SigmaTableProps> = ({ rules, loading, onEdit, onDelet
                                 border: `1px solid ${rule.isCustom ? 'rgba(0,150,255,0.2)' : 'rgba(0,255,65,0.1)'}`,
                                 fontWeight: 'bold'
                             }}>
-                                {rule.isCustom ? 'CUSTOM' : 'SYSTEM'}
+                                {rule.isCustom ? 'CUSTOM' : 'SIGMA'}
                             </span>
                         </td>
                         <td style={{ padding: '12px 15px' }}>

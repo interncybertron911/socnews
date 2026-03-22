@@ -12,7 +12,7 @@ interface SigmaRuleCardProps {
 const SigmaRuleCard: React.FC<SigmaRuleCardProps> = ({ rules, selectedId, onSelect, yamlText, cachedRuleIds }) => {
     return (
         <aside className="card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <div className="card-header">SIGMA DETECTION RULE</div>
+            <div className="card-header">DETECTION RULE</div>
             <div style={{ padding: 12, flex: 1, display: 'flex', flexDirection: 'column', gap: 10, minHeight: 0 }}>
                 <select
                     className="input-dark"
@@ -40,7 +40,9 @@ const SigmaRuleCard: React.FC<SigmaRuleCardProps> = ({ rules, selectedId, onSele
                         lineHeight: 1.5,
                         padding: '10px',
                         overflow: 'auto',
-                        whiteSpace: 'pre',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word',
                         background: '#0a0a0a',
                         border: '1px solid #222',
                         borderRadius: '4px'

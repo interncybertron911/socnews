@@ -105,7 +105,7 @@ router.get("/articles", async (req, res) => {
         limit: req.query.limit
     });
     try {
-        const limit = Math.min(Number(req.query.limit ?? 50), 200);
+        const limit = Math.min(Number(req.query.limit ?? 50), 5000);
 
         const statusCsv = String(req.query.status ?? "NEW,READ,IN_PROGRESS").trim();
         const title = String(req.query.title ?? "").trim();

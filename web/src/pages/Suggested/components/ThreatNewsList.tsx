@@ -62,6 +62,15 @@ const ThreatNewsList: React.FC<ThreatNewsListProps> = ({
                     const isNew = article.status === "NEW";
                     const isLocked = !!article.lockedBy && article.lockedBy !== currentUser;
 
+                    // Severity colors based on keywords in title
+                    const getSeverityColor = (title: string) => {
+                        const t = title.toLowerCase();
+                        if (t.includes('cve') || t.includes('exploit') || t.includes('zero day') || t.includes('0day') || t.includes('critical') || t.includes('rce') || t.includes('bypassed')) return 'var(--accent-red)';
+                        if (t.includes('malware') || t.includes('breach') || t.includes('ransomware') || t.includes('attack') || t.includes('vulnerability') || t.includes('hacked') || t.includes('leak')) return 'var(--accent-orange)';
+                        return '#444'; // Default / Low
+                    };
+                    const severityColor = getSeverityColor(article.title);
+
                     // Status colors
                     let statusColor = "var(--accent-green)";
                     let categoryGlow = "transparent";
@@ -97,10 +106,12 @@ const ThreatNewsList: React.FC<ThreatNewsListProps> = ({
                             style={{
                                 cursor: (disabled || isLocked) ? 'not-allowed' : 'pointer',
                                 padding: '15px',
-                                borderLeft: isActive ? `3px solid ${statusColor}` : `3px solid #333`,
-                                background: isActive ? categoryGlow || 'rgba(0, 255, 65, 0.05)' : (article.status === 'COMPLETE' ? 'rgba(0, 255, 157, 0.02)' : 'transparent'),
+                                borderLeft: isActive ? `6px solid ${severityColor}` : `3px solid ${severityColor}`,
+                                background: isActive ? 'rgba(255, 255, 255, 0.06)' : (article.status === 'COMPLETE' ? 'rgba(0, 255, 157, 0.02)' : 'transparent'),
                                 position: 'relative',
-                                transition: 'all 0.3s ease'
+                                transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                                transform: isActive ? 'translateX(5px)' : 'none',
+                                boxShadow: isActive ? `-5px 0 15px ${severityColor}40` : 'none'
                             }}
                             onClick={() => !disabled && !isLocked && onSelect(article.id)}
                         >

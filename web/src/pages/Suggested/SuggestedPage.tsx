@@ -70,6 +70,7 @@ const SuggestedPage: React.FC = () => {
     const [filterStatuses, setFilterStatuses] = useState<string[]>(['NEW', 'READ', 'IN_PROGRESS', 'COMPLETE']);
     const [filterStartDate, setFilterStartDate] = useState('');
     const [filterEndDate, setFilterEndDate] = useState('');
+    const [filterSeverity, setFilterSeverity] = useState<string>('ALL'); // ALL, CRITICAL, WARNING, INFO
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     // Ref for managing the current loading session's AbortController
@@ -80,18 +81,29 @@ const SuggestedPage: React.FC = () => {
      * Map TIArticle -> ThreatArticle shape for existing UI components.
      */
     const uiArticles: (ThreatArticle & { status?: string })[] = useMemo(() => {
-        return tiArticles.map((a: any) => ({
-            id: a.externalId,
-            source: a.source,
-            title: a.title,
-            url: a.url,
-            publishTime: a.publishTime,
-            contentText: a.contentText || "",
-            status: a.status,
-            lockedBy: a.lockedBy,
-            assignedTo: a.assignedTo
-        }));
-    }, [tiArticles]);
+        return tiArticles
+            .filter((a: any) => {
+                if (filterSeverity === 'ALL') return true;
+                const getSeverityLevel = (title: string) => {
+                    const t = (title || "").toLowerCase();
+                    if (t.includes('cve') || t.includes('exploit') || t.includes('zero day') || t.includes('0day') || t.includes('critical') || t.includes('rce') || t.includes('bypassed')) return 'CRITICAL';
+                    if (t.includes('malware') || t.includes('breach') || t.includes('ransomware') || t.includes('attack') || t.includes('vulnerability') || t.includes('hacked') || t.includes('leak')) return 'WARNING';
+                    return 'INFO';
+                };
+                return getSeverityLevel(a.title) === filterSeverity;
+            })
+            .map((a: any) => ({
+                id: a.externalId,
+                source: a.source,
+                title: a.title,
+                url: a.url,
+                publishTime: a.publishTime,
+                contentText: a.contentText || "",
+                status: a.status,
+                lockedBy: a.lockedBy,
+                assignedTo: a.assignedTo
+            }));
+    }, [tiArticles, filterSeverity]);
 
     const currentArticle = uiArticles.find((a) => a.id === selectedArticleId);
 
@@ -240,6 +252,23 @@ const SuggestedPage: React.FC = () => {
         setTiArticles((prev) =>
             prev.map((a) => (a.externalId === externalId ? { ...a, ...patch } : a))
         );
+    };
+
+    const handleCloseArticle = async () => {
+        console.log("[SuggestedPage] User closed article");
+        const currentUser = authService.getCurrentUser()?.username || "anonymous";
+        if (lockedArticleIdRef.current) {
+            socketService.emitLeaveNews(lockedArticleIdRef.current, currentUser);
+            patchTiArticle(lockedArticleIdRef.current, { lockedBy: null });
+            await unlockArticle(lockedArticleIdRef.current, currentUser).catch(console.error);
+            lockedArticleIdRef.current = '';
+        }
+        setSelectedArticleId('');
+        setAnalysisData(null);
+        setSigmaRules([]);
+        setCachedRuleIds([]);
+        setSelectedSigmaId('');
+        setSigmaYamlText('');
     };
 
     // ✅ helper: ensure we have an AbortController session (so Cancel Loading works)
@@ -562,6 +591,15 @@ const SuggestedPage: React.FC = () => {
                     <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span>INTEL & CONTEXT</span>
                         <div style={{ display: "flex", gap: 8 }}>
+                            {selectedArticleId && !loadingSuggested && (
+                                <button
+                                    className="btn"
+                                    style={{ fontSize: 10, padding: "4px 8px", borderColor: '#555', color: '#ccc' }}
+                                    onClick={handleCloseArticle}
+                                >
+                                    Close News
+                                </button>
+                            )}
                             <button
                                 className="btn"
                                 style={{ fontSize: 10, padding: "4px 8px" }}
@@ -601,11 +639,14 @@ const SuggestedPage: React.FC = () => {
                                 setFilterStartDate={setFilterStartDate}
                                 filterEndDate={filterEndDate}
                                 setFilterEndDate={setFilterEndDate}
+                                filterSeverity={filterSeverity}
+                                setFilterSeverity={setFilterSeverity}
                                 onReset={async () => {
                                     setFilterTitle('');
                                     setFilterStatuses(['NEW', 'READ', 'IN_PROGRESS', 'COMPLETE']);
                                     setFilterStartDate('');
                                     setFilterEndDate('');
+                                    setFilterSeverity('ALL');
 
                                     // Clear selection & lock
                                     const currentUser = authService.getCurrentUser()?.username || "anonymous";

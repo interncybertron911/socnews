@@ -299,7 +299,7 @@ const SigmaRulesPage: React.FC = () => {
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '15px' }}>
                 <h2 style={{ color: 'var(--accent-green)', margin: 0, letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <span style={{ fontSize: '24px' }}>📜 Sigma Rules Repository</span>
+                    <span style={{ fontSize: '24px' }}>📜 Rules Repository</span>
                     <span style={{ fontSize: '10px', color: '#666', fontWeight: 'normal' }}>CENTRAL DETECTION DATABASE</span>
                 </h2>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
