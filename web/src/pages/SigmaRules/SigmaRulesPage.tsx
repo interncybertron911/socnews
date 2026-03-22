@@ -136,8 +136,12 @@ const SigmaRulesPage: React.FC = () => {
         } else {
             setIsEditing(false);
             const template = JSON.parse(JSON.stringify(DEFAULT_TEMPLATE));
-            // Auto generate ID for new custom rule
-            const generatedId = crypto.randomUUID();
+            
+            // Safe random ID generation for both HTTP and HTTPS
+            const generatedId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+                ? crypto.randomUUID() 
+                : Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                
             template.unshift({ id: 'id-auto', key: 'id', value: generatedId });
             setFormFields(template);
         }
